@@ -1,0 +1,216 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/*estrutura de dados para a playlist*/
+typedef struct playlist {
+    char nomemusica[101];
+    struct playlist *prox;
+    struct playlist *ant;
+} list;
+
+/*adicionando musicas na playlist*/
+int insere_musica(list ** inicio, list ** cursor, char nome[101])
+{
+    list *nova = (list *) malloc(sizeof(list));
+    strcpy(nova->nomemusica, nome);
+    /*se for a priemira musica */
+    if (*cursor == NULL) {
+	*cursor = nova;
+	*inicio = nova;
+	nova->ant = NULL;
+	nova->prox = NULL;
+    } else {
+	/*se for a ultima musica */
+	if ((*cursor)->prox == NULL) {
+	    (*cursor)->prox = nova;
+	    nova->prox = NULL;
+	    nova->ant = *cursor;
+	}
+	/*se forem musicas intermediarias */
+	else {
+	    nova->prox = (*cursor)->prox;
+	    ((*cursor)->prox)->ant = nova;
+	    (*cursor)->prox = nova;
+	    nova->ant = *cursor;
+	}
+    }
+}
+
+/*funÃ§Ã£o que remove a musica da playlist*/
+int remove_musica(list ** inicio, list ** cursor, char nome[101])
+{
+    list *a = *inicio;
+    /*varrendo a lista atÃ© achar a musica */
+    while (a != NULL && strcmp(a->nomemusica, nome) != 0) {
+	a = a->prox;
+    }
+    // printf("anterior: %s\n", (a->ant)->nomemusica);
+    // printf("proxima: %s\n", (a->prox)->nomemusica);
+    /*se a musica for encontrada */
+    if (a != NULL) {
+	/*se a que quer remover Ã© a do cursor */
+	if (*cursor == a) {
+	    /*verifica se hÃ¡ mais musicas antes ou depois */
+	    if (a->ant != NULL || a->prox != NULL) {
+		/*Ã© a primeira da lista */
+		if (a->ant == NULL) {
+		    /*atualiza o cursor para a musica anterior */
+		    *cursor = a->prox;
+		}
+		/*qualquer posiÃ§Ã£o que nÃ£o seja a primeira da lista */
+		else {
+		    *cursor = a->ant;
+		}
+	    }
+	}
+	/*se a musica for a primeira da lista */
+	if (a->ant == NULL && a->prox != NULL) {
+	    *inicio = a->prox;
+	    (*inicio)->ant = NULL;
+	}
+	/*se a musica for a ultima da lista */
+	if (a->ant != NULL && a->prox == NULL) {
+	    (a->ant)->prox = NULL;
+	}
+	/*se a musica estiver no meio */
+	if (a->ant != NULL && a->prox != NULL) {
+	    (a->ant)->prox = a->prox;
+	    (a->prox)->ant = a->ant;
+	}
+	/*se o removido for o unico elemento da lista */
+	if (a->ant == NULL && a->prox == NULL) {
+	    *cursor = NULL;
+	}
+	free(a);
+    }
+}
+
+/*funÃ§Ã£o toca musica*/
+int toca(list ** cursor)
+{
+    if (*cursor != NULL) {
+	list *b = *cursor;
+	printf("%s\n", b->nomemusica);
+	if (b->prox != NULL) {
+	    *cursor = b->prox;
+	}
+    }
+    if (*cursor == NULL) {
+	printf("\n");
+    }
+}
+
+/*volta o indicador uma posiÃ§Ã£o para tras*/
+int volta(list ** cursor)
+{
+    if ((*cursor)->ant != NULL) {
+	*cursor = (*cursor)->ant;
+    }
+}
+
+/*funÃ§Ã£o que toca todas as musicas do indicador atÃ© o final*/
+int final(list ** cursor)
+{
+    list *p = *cursor;
+    while (p != NULL) {
+	printf("%s\n", p->nomemusica);
+	*cursor = p;
+	p = p->prox;
+    }
+}
+
+/*inverte a ordem da musicas na lista*/
+int inverte(list ** inicio)
+{
+    list *k = *inicio;
+    list *help;
+    int contador;
+    /*varrendo atÃ© achar o ultimo elemento */
+    while (k->prox != NULL) {
+	k = k->prox;
+    }
+    *inicio = k;
+    help = (*inicio)->prox;
+    /*realizando a inversÃ£o das musicas */
+    while (k->ant != NULL) {
+	k->prox = k->ant;
+	k->ant = help;
+	help = (k->prox)->prox;
+	k = k->prox;
+    }
+    /*atualizando o ponteiro "prox" do Ãºltimo nÃ³ */
+    k->prox = k->ant;
+    k->ant = help;
+    /*atualizando o ponteiro "ant" do primeiro nÃ³ */
+    (*inicio)->ant = NULL;
+}
+
+int freememory(list ** inicio)
+{
+    list *p = *inicio;
+    while (p != NULL) {
+	list *temp = p;
+	p = p->prox;
+	free(temp);
+    }
+}
+
+/*uma ajuda sÃ³ para imprimir os elementos do inicio*/
+int imprime(list ** inicio)
+{
+    list *r = *inicio;
+    while (r != NULL) {
+	printf("%s\n", r->nomemusica);
+	r = r->prox;
+    }
+}
+
+int main()
+{
+    list *inicio = NULL;
+    list *cursor = NULL;
+    int N = 0;
+    char operacao[13];
+    char nomemusica[101];
+    scanf("%d", &N);
+    while (N != 0) {
+	while (N > 0) {
+	    scanf("%s", operacao);
+	    if (strcmp(operacao, "insere") == 0) {
+		scanf(" %[^\n]", nomemusica);
+		insere_musica(&inicio, &cursor, nomemusica);
+	    }
+	    if (strcmp(operacao, "remove") == 0) {
+		scanf(" %[^\n]", nomemusica);
+		remove_musica(&inicio, &cursor, nomemusica);
+	    }
+	    if (strcmp(operacao, "toca") == 0) {
+		toca(&cursor);
+	    }
+	    if (strcmp(operacao, "volta") == 0) {
+		volta(&cursor);
+	    }
+	    if (strcmp(operacao, "final") == 0) {
+		final(&cursor);
+	    }
+	    if (strcmp(operacao, "inverte") == 0) {
+		inverte(&inicio);
+	    }
+	    if (strcmp(operacao, "imprime") == 0) {
+		imprime(&inicio);
+	    }
+	    N--;
+	}
+	scanf("%d", &N);
+	if (N == 0) {
+	    break;
+	} else {
+	    freememory(&inicio);
+	    inicio = NULL;
+	    cursor = NULL;
+	    printf("\n");
+	}
+    }
+    freememory(&inicio);
+}
